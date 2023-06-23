@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
-const emailSender = require('../utils/email');
+const { sendSignupEmail } = require('../utils/email');
 
 const signToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -40,27 +40,7 @@ exports.signUp = catchAsync(async (req, res, next) => {
       coordinates: req.body.coordinates,
     },
   });
-  await emailSender(
-    newUser,
-    'Welcome to Shopify!',
-    `Dear ${newUser.name}},
-    Thank you for signing up for Shopify! We are excited to have you on board.
-    To get started, please log in to your account using the credentials you provided during the sign-up process. 
-    If you have any questions or concerns, please don't hesitate to reach out to our support team at sfe.shopify@gmail.com.
-    We hope you enjoy using Shopify and look forward to helping you achieve your goals.
-    Best regards,
-    Shehab Ashraf
-    Shopify Team`,
-    `<p>Dear ${newUser.name},</p>
-    <p>Thank you for signing up for Shopify! We are excited to have you on board.</p>
-    <p>To get started, please log in to your account using the credentials you provided during the sign-up process.</p>
-    <p>If you have any questions or concerns, please don't hesitate to reach out to our support team at sfe.shopify@gmail.com
-    We hope you enjoy using Shopify and look forward to helping you achieve your goals.</p>
-    <p>Best regards,</p>
-    <p>Shehab Ashraf</p>
-    <p>Shopify Team</p>
-    `
-  );
+  await sendSignupEmail(newUser);
   createSendToken(newUser, 201, res);
 });
 

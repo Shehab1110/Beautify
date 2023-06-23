@@ -14,6 +14,9 @@ const app = express();
 const userRouter = require('./routes/userRoutes');
 const productRouter = require('./routes/productRoutes');
 const cartRouter = require('./routes/cartRoutes');
+const orderRouter = require('./routes/orderRoutes');
+const paymentRouter = require('./routes/paymentRoutes');
+const ratingRouter = require('./routes/ratingRoutes');
 
 // Serving static files
 app.use(express.static(path.join(__dirname, 'public')));
@@ -35,7 +38,7 @@ if (process.env.NODE_ENV === 'development') {
 
 // Setting a rate-limit for requests from the same IP
 const limiter = rateLimit({
-  max: 250,
+  max: 100,
   windowMs: 60 * 60 * 1000,
   message: 'Too many requests from this IP, please try again in an hour!',
 });
@@ -55,6 +58,9 @@ app.get('/', (req, res) => {
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/products', productRouter);
 app.use('/api/v1/cart', cartRouter);
+app.use('/api/v1/orders', orderRouter);
+app.use('/api/v1/payments', paymentRouter);
+app.use('/api/v1/ratings', ratingRouter);
 
 // Handling unhandled routes
 app.all('*', (req, res, next) => {
