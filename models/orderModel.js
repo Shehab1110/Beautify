@@ -9,14 +9,16 @@ const orderSchema = new mongoose.Schema(
     },
     orderItems: [
       {
-        name: { type: String, required: true },
-        qty: { type: Number, required: true },
-        price: { type: Number, required: true },
-        image: { type: String, required: true },
         product: {
           type: mongoose.Schema.Types.ObjectId,
           ref: 'Product',
           required: true,
+        },
+        quantity: {
+          type: Number,
+          required: true,
+          min: [1, 'Quantity can not be less than 1.'],
+          default: 1,
         },
       },
     ],
@@ -24,14 +26,21 @@ const orderSchema = new mongoose.Schema(
       address: { type: String, required: true },
       city: { type: String, required: true },
     },
+    phoneNumber: {
+      type: String,
+      validate: {
+        validator: function (v) {
+          const regex = /^(\+20|0)?1[0125][0-9]{8}$/;
+          return regex.test(v);
+        },
+        message: 'Please provide a valid phone number!',
+      },
+      required: [true, 'Please provide a phone number!'],
+    },
     paymentMethod: {
       type: String,
-      enum: ['Cash', 'Card'],
+      enum: ['Cash On Delivery', 'Card'],
       required: true,
-    },
-    paymentResult: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Payment',
     },
     totalPrice: {
       type: Number,
@@ -40,19 +49,22 @@ const orderSchema = new mongoose.Schema(
     },
     isPaid: {
       type: Boolean,
-      required: true,
-      default: false,
-    },
-    paidAt: {
-      type: Date,
-    },
-    isDelivered: {
-      type: Boolean,
-      required: true,
       default: false,
     },
     deliveredAt: {
       type: Date,
+    },
+    status: {
+      type: String,
+      enum: [
+        'Pending',
+        'Processing',
+        'Shipped',
+        'Delivered',
+        'Cancelled',
+        'Returned',
+      ],
+      default: 'Pending',
     },
   },
   {
@@ -61,6 +73,14 @@ const orderSchema = new mongoose.Schema(
 );
 
 orderSchema.index({ user: 1 });
+
+orderSchema.pre(/^find/, function (next) {
+  this.populate({
+    path: 'orderItems.product',
+    select: 'name price image',
+  });
+  next();
+});
 
 const Order = mongoose.model('Order', orderSchema);
 

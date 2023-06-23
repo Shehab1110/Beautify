@@ -38,7 +38,19 @@ exports.getProductByID = catchAsync(async (req, res, next) => {
 exports.getProductsByCategory = catchAsync(async (req, res, next) => {
   const { category } = req.params;
   if (!category) return next(new AppError('Please provide a category!', 400));
-  if (!['food', 'drinks', 'desserts'].includes(category))
+  if (
+    ![
+      'face',
+      'eyes',
+      'lips',
+      'nails',
+      'brushes and tools',
+      'makeup removals',
+      'skin care',
+      'hair care',
+      'bath and body',
+    ].includes(category)
+  )
     return next(new AppError('Please provide a valid category!', 400));
   const features = new APIFeatures(Product.find({ category }), req.query)
     .filter()
@@ -67,10 +79,6 @@ exports.getProductByName = catchAsync(async (req, res, next) => {
     .limitFields()
     .paginate();
   const products = await features.query;
-  // const products = await Product.find({
-  //   name: { $regex: name, $options: 'i' },
-  // });
-  console.log(req.query);
   res.status(200).json({
     status: 'success',
     results: products.length,

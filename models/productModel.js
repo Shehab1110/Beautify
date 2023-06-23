@@ -40,7 +40,17 @@ const productSchema = new mongoose.Schema(
     category: {
       type: String,
       required: [true, 'Please provide a category'],
-      enum: ['food', 'drinks', 'desserts'],
+      enum: [
+        'face',
+        'Eyes',
+        'Lips',
+        'Nails',
+        'brushes and tools',
+        'makeup removals',
+        'skin care',
+        'hair care',
+        'bath and body',
+      ],
     },
     ratingNum: {
       type: Number,
