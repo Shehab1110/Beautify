@@ -12,6 +12,8 @@ const globalErrorController = require('./controllers/errorController');
 
 const app = express();
 const userRouter = require('./routes/userRoutes');
+const productRouter = require('./routes/productRoutes');
+const cartRouter = require('./routes/cartRoutes');
 
 // Serving static files
 app.use(express.static(path.join(__dirname, 'public')));
@@ -39,7 +41,7 @@ const limiter = rateLimit({
 });
 app.use('/api', limiter);
 
-app.use(express.json({ limit: '100kb' }));
+app.use(express.json({ limit: '5kb' }));
 
 app.use((req, res, next) => {
   req.reqTime = new Date().toISOString();
@@ -51,6 +53,8 @@ app.get('/', (req, res) => {
 });
 
 app.use('/api/v1/users', userRouter);
+app.use('/api/v1/products', productRouter);
+app.use('/api/v1/cart', cartRouter);
 
 // Handling unhandled routes
 app.all('*', (req, res, next) => {

@@ -27,8 +27,10 @@ const ratingsSchema = new mongoose.Schema(
   }
 );
 
+// Preventing duplicate ratings
 ratingsSchema.index({ product: 1, user: 1 }, { unique: true });
 
+// Document middleware for populating the user field with the user's name and photo
 ratingsSchema.pre(/^find/, function (next) {
   this.populate({
     path: 'user',
@@ -36,7 +38,7 @@ ratingsSchema.pre(/^find/, function (next) {
   });
   next();
 });
-
+// Static method for calculating average rating and quantity of ratings for a product (this refers to the Ratings model)
 ratingsSchema.statics.calcAverageRatings = async function (productID) {
   const stats = await this.aggregate([
     {
