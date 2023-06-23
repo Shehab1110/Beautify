@@ -1,16 +1,12 @@
 {
-  "name": "healthify",
+  "name": "Beautify",
   "version": "1.0.0",
-  "description": "Medical mobile application for a graduation project",
+  "description": "E-Store for beauty products",
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon server.js"
   },
-  "keywords": [
-    "Healthify",
-    "Medical application"
-  ],
   "author": "Shehab Ashraf",
   "license": "ISC",
   "dependencies": {
