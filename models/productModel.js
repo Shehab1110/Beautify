@@ -60,6 +60,11 @@ const productSchema = new mongoose.Schema(
       type: Number,
       default: 4.5,
     },
+    seller: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: [true, 'Please provide a seller'],
+    },
   },
   {
     timestamps: true,
