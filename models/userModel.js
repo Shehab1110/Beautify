@@ -15,7 +15,7 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['customer', 'admin'],
+      enum: ['customer', 'seller', 'admin'],
       default: 'customer',
     },
     email: {
@@ -85,10 +85,7 @@ const userSchema = new mongoose.Schema(
     },
   },
   {
-    timestamps: {
-      createdAt: 'createdAt',
-      updatedAt: 'updatedAt',
-    },
+    timestamps: true,
   }
 );
 
