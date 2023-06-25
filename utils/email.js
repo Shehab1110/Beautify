@@ -60,3 +60,14 @@ exports.sendOrderEmail = async function (user, order) {
        Beautify Team</p>`
   );
 };
+
+exports.sendForgotPasswordEmail = async function (user, resetURL) {
+  const message = `Forgot your password? Submit a patch request with your new password and password confirm to: ${resetURL}. \nIf you didn't forget your password, please ignore this email.`;
+
+  await emailSender(
+    user,
+    'Your password reset token (Valid for 10 min)',
+    message,
+    message
+  );
+};
