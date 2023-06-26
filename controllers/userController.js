@@ -86,6 +86,7 @@ exports.addProduct = catchAsync(async (req, res, next) => {
     price,
     image,
     category,
+    seller: req.user.id,
   });
   res.status(201).json({
     status: 'success',

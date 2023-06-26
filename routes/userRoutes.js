@@ -7,6 +7,12 @@ const router = express.Router();
 router.get('/', userController.getAllUsers);
 router.get('/reOpenApp', authController.reOpenApp);
 router.post('/signup', authController.signUp);
+router.post(
+  '/seller-signup',
+  authController.protect,
+  authController.permitOnly('admin'),
+  authController.sellerSignUp
+);
 router.post('/login', authController.login);
 router.patch(
   '/updateMyPassword',
@@ -28,7 +34,7 @@ router.patch('/resetPassword/:token', authController.resetPassword);
 router.post(
   '/addProduct',
   authController.protect,
-  authController.permitOnly('admin'),
+  authController.permitOnly('seller'),
   userController.addProduct
 );
 

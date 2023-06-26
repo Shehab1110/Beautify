@@ -87,3 +87,33 @@ exports.getProductByName = catchAsync(async (req, res, next) => {
     },
   });
 });
+
+exports.updateProduct = catchAsync(async (req, res, next) => {
+  const { user } = req;
+  const { productID } = req.params;
+  const { name, description, price, category } = req.body;
+  if (!productID)
+    return next(new AppError('Please provide a product ID!', 400));
+  if (!validator.isMongoId(productID))
+    return next(new AppError('Please provide a valid product ID!', 400));
+  const product = await Product.findById(productID);
+  if (!product)
+    return next(new AppError('No product found with that ID!', 404));
+  if (product.seller !== user.id)
+    return next(new AppError('You are not authorized to do that!', 403));
+  if (!name && !description && !price && !category)
+    return next(new AppError('Please provide at least one field to update!'));
+
+  product.name = name ?? product.name;
+  product.description = description ?? product.description;
+  product.price = price ?? product.price;
+  product.category = category ?? product.category;
+  await product.save();
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      product,
+    },
+  });
+});
