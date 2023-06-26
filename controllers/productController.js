@@ -99,7 +99,7 @@ exports.updateProduct = catchAsync(async (req, res, next) => {
   const product = await Product.findById(productID);
   if (!product)
     return next(new AppError('No product found with that ID!', 404));
-  if (product.seller !== user.id)
+  if (product.seller.id !== user.id)
     return next(new AppError('You are not authorized to do that!', 403));
   if (!name && !description && !price && !category)
     return next(new AppError('Please provide at least one field to update!'));
@@ -115,5 +115,24 @@ exports.updateProduct = catchAsync(async (req, res, next) => {
     data: {
       product,
     },
+  });
+});
+
+exports.deleteProduct = catchAsync(async (req, res, next) => {
+  const { user } = req;
+  const { productID } = req.params;
+  if (!productID)
+    return next(new AppError('Please provide a product ID!', 400));
+  if (!validator.isMongoId(productID))
+    return next(new AppError('Please provide a valid product ID!', 400));
+  const product = await Product.findById(productID);
+  if (!product)
+    return next(new AppError('No product found with that ID!', 404));
+  if (product.seller.id !== user.id)
+    return next(new AppError('You are not authorized to do that!', 403));
+  await product.remove();
+  res.status(204).json({
+    status: 'success',
+    data: null,
   });
 });
