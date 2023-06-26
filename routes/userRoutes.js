@@ -34,7 +34,7 @@ router.patch('/resetPassword/:token', authController.resetPassword);
 router.post(
   '/addProduct',
   authController.protect,
-  authController.permitOnly('admin'),
+  authController.permitOnly('seller'),
   userController.addProduct
 );
 

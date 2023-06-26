@@ -74,6 +74,14 @@ const productSchema = new mongoose.Schema(
 productSchema.index({ name: 1, category: 1 }, { unique: true });
 productSchema.index({ price: 1, category: 1 }, { unique: false });
 
+productSchema.pre(/^find/, function (next) {
+  this.populate({
+    path: 'seller',
+    select: 'name photo phoneNumber location',
+  });
+  next();
+});
+
 const Product = mongoose.model('Product', productSchema);
 
 module.exports = Product;
