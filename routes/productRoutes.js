@@ -51,4 +51,18 @@ router.delete(
   productController.deleteProduct
 );
 
+router.post(
+  '/add-to-favorites/:productID',
+  authController.protect,
+  authController.permitOnly('customer'),
+  productController.addToFavorites
+);
+
+router.post(
+  '/remove-from-favorites/:productID',
+  authController.protect,
+  authController.permitOnly('customer'),
+  productController.removeFromFavorites
+);
+
 module.exports = router;

@@ -83,6 +83,12 @@ const userSchema = new mongoose.Schema(
       },
       coordinates: [Number],
     },
+    favoriteProducts: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Product',
+      },
+    ],
   },
   {
     timestamps: true,
