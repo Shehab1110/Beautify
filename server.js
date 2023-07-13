@@ -10,7 +10,7 @@ process.on('uncaughtException', (err) => {
   console.log(chalk.red(err.name, err.message));
   process.exit(1);
 });
-
+require('./utils/cache');
 const app = require('./app');
 
 const DB = process.env.DATABASE.replace(
