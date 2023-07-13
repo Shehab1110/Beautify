@@ -30,12 +30,4 @@ router.delete('/deleteMe', authController.protect, userController.deleteMe);
 router.post('/forgotPassword', authController.forgotPassword);
 router.patch('/resetPassword/:token', authController.resetPassword);
 
-// For Admin
-router.post(
-  '/addProduct',
-  authController.protect,
-  authController.permitOnly('seller'),
-  userController.addProduct
-);
-
 module.exports = router;
