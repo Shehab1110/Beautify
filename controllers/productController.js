@@ -6,6 +6,19 @@ const Product = require('../models/productModel');
 const AppError = require('../utils/appError');
 const Ratings = require('../models/ratingsModel');
 
+const multer = require('multer');
+const sharp = require('sharp');
+
+// To store the image in memory
+const multerStorage = multer.memoryStorage();
+
+// To accept only images and reject other files
+const multerFilter = (req, file, cb) => {
+  file.mimetype.startsWith('image')
+    ? cb(null, true)
+    : cb(new AppError('Not an image! Please upload only images.', 400), false);
+};
+
 exports.getAllProducts = catchAsync(async (req, res, next) => {
   const products = await Product.find();
   res.status(200).json({
@@ -15,6 +28,17 @@ exports.getAllProducts = catchAsync(async (req, res, next) => {
       products,
     },
   });
+});
+
+exports.getBestSellingProducts = catchAsync(async (req, res, next) => {
+  const products = await Product.find().sort('-soldCount').limit(10).exec();
+  return products
+    ? res.status(200).json({
+        status: 'success',
+        results: products.length,
+        products,
+      })
+    : next(new AppError('No bestselling products found!', 404));
 });
 
 exports.getProductByID = catchAsync(async (req, res, next) => {
@@ -28,10 +52,6 @@ exports.getProductByID = catchAsync(async (req, res, next) => {
     return next(new AppError('No product found with that ID!', 404));
   const ratings = await Ratings.find({ product: id });
   console.log(`Favorite Products: ${user.favoriteProducts}`);
-  const favorites = user.favoriteProducts.map((p) => p.toString());
-  console.log(`Products IDs in the array: ${favorites}`);
-  console.log(favorites.includes(id));
-  if (favorites.includes(id)) product.favorite = true;
   res.status(200).json({
     status: 'success',
     data: {
@@ -67,13 +87,13 @@ exports.getProductsByCategory = catchAsync(async (req, res, next) => {
     .limitFields()
     .paginate();
   const products = await features.query;
-  console.log(`Favorite Products: ${req.user.favoriteProducts}`);
-  console.log(`Products IDs in the array: ${products.map((p) => p.id)}`);
-  products.forEach((product) => {
-    req.user.favoriteProducts.includes(product.id)
-      ? (product.isFavorite = true)
-      : null;
-  });
+  // console.log(`Favorite Products: ${req.user.favoriteProducts}`);
+  // console.log(`Products IDs in the array: ${products.map((p) => p.id)}`);
+  // products.forEach((product) => {
+  //   req.user.favoriteProducts.includes(product.id)
+  //     ? (product.isFavorite = true)
+  //     : null;
+  // });
   res.status(200).json({
     status: 'success',
     results: products.length,
@@ -104,10 +124,31 @@ exports.getProductByName = catchAsync(async (req, res, next) => {
   });
 });
 
+// To upload the image to the memory
+exports.uploadProductPhoto = multer({
+  storage: multerStorage,
+  fileFilter: multerFilter,
+  limits: {
+    fileSize: 2 * 1024 * 1024, // 2MB
+  },
+}).single('photo');
+
+// To resize the image and save it to the disk
+exports.resizeProductPhoto = catchAsync(async (req, res, next) => {
+  if (!req.file) return next();
+  req.file.filename = `product-${req.user.id}-${Date.now()}.jpeg`;
+  await sharp(req.file.buffer)
+    .resize(500, 500)
+    .toFormat('jpeg')
+    .jpeg({ quality: 90 })
+    .toFile(`public/img/users/${req.file.filename}`);
+  next();
+});
+
 exports.updateProduct = catchAsync(async (req, res, next) => {
   const { user } = req;
   const { productID } = req.params;
-  const { name, description, price, category } = req.body;
+  const { name, description, price, category, inStock } = req.body;
   if (!productID)
     return next(new AppError('Please provide a product ID!', 400));
   if (!validator.isMongoId(productID))
@@ -115,7 +156,7 @@ exports.updateProduct = catchAsync(async (req, res, next) => {
   const product = await Product.findById(productID);
   if (!product)
     return next(new AppError('No product found with that ID!', 404));
-  if (product.seller.id !== user.id)
+  if (product.seller.name !== user.name)
     return next(new AppError('You are not authorized to do that!', 403));
   if (!name && !description && !price && !category)
     return next(new AppError('Please provide at least one field to update!'));
@@ -124,6 +165,8 @@ exports.updateProduct = catchAsync(async (req, res, next) => {
   product.description = description ?? product.description;
   product.price = price ?? product.price;
   product.category = category ?? product.category;
+  product.inStock = inStock ?? product.inStock;
+  product.image = req.file.filename ?? product.image;
   await product.save();
 
   res.status(200).json({
@@ -153,7 +196,7 @@ exports.deleteProduct = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.addToFavorites = catchAsync(async (req, res, next) => {
+exports.addToWishlist = catchAsync(async (req, res, next) => {
   const { user } = req;
   const { productID } = req.params;
   if (!productID)
@@ -163,9 +206,9 @@ exports.addToFavorites = catchAsync(async (req, res, next) => {
   const product = await Product.findById(productID);
   if (!product)
     return next(new AppError('No product found with that ID!', 404));
-  if (user.favoriteProducts.includes(productID))
-    return next(new AppError('Product already in favorites!', 400));
-  user.favoriteProducts.push(productID);
+  if (user.wishlist.includes(productID))
+    return next(new AppError('Product already in wishlist!', 400));
+  user.wishlist.push(productID);
   await user.save({ validateBeforeSave: false });
   res.status(200).json({
     status: 'success',
@@ -175,7 +218,7 @@ exports.addToFavorites = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.removeFromFavorites = catchAsync(async (req, res, next) => {
+exports.removeFromWishlist = catchAsync(async (req, res, next) => {
   const { user } = req;
   const { productID } = req.params;
   if (!productID)
@@ -185,9 +228,9 @@ exports.removeFromFavorites = catchAsync(async (req, res, next) => {
   const product = await Product.findById(productID);
   if (!product)
     return next(new AppError('No product found with that ID!', 404));
-  if (!user.favoriteProducts.includes(productID))
-    return next(new AppError('Product not in favorites!', 400));
-  user.favoriteProducts.splice(user.favoriteProducts.indexOf(productID), 1);
+  if (!user.wishlist.includes(productID))
+    return next(new AppError('Product not in wishlist!', 400));
+  user.wishlist.splice(user.wishlist.indexOf(productID), 1);
   await user.save({ validateBeforeSave: false });
   res.status(200).json({
     status: 'success',
@@ -197,9 +240,9 @@ exports.removeFromFavorites = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.getFavorites = catchAsync(async (req, res, next) => {
+exports.getWishlist = catchAsync(async (req, res, next) => {
   const { user } = req;
-  const products = await Product.find({ _id: { $in: user.favoriteProducts } });
+  const products = await Product.find({ _id: { $in: user.wishlist } });
   res.status(200).json({
     status: 'success',
     results: products.length,

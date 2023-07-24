@@ -44,13 +44,17 @@ cartSchema.pre(/^find/, function (next) {
 });
 
 // Instance method for calculating total price of the cart (this refers to the cart document)
-cartSchema.methods.calcTotalPrice = async function () {
+cartSchema.methods.calcTotalPrice = async function (
+  discount = 0,
+  deliveryFees = 0
+) {
   let totalPrice = 0;
   this.cartItems.forEach((item) => {
     totalPrice += item.product.price * item.quantity;
   });
-  this.totalPrice = totalPrice;
+  this.totalPrice = totalPrice - totalPrice * discount + deliveryFees;
   await this.save();
+  return this;
 };
 
 const Cart = mongoose.model('Cart', cartSchema);

@@ -1,6 +1,7 @@
 const validator = require('validator');
 
 const Order = require('../models/orderModel');
+const Product = require('../models/productModel');
 const Cart = require('../models/cartModel');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
@@ -66,10 +67,26 @@ exports.makeOrder = catchAsync(async (req, res, next) => {
     paymentMethod,
     totalPrice: cart.totalPrice,
   });
-  await order.populate('orderItems.product');
+  // Prepare the bulk update operations array
+  const bulkUpdateOps = order.orderItems.map((orderItem) => {
+    const productId = orderItem.product._id;
+    const updatedInStock = orderItem.product.inStock - orderItem.quantity;
+
+    return {
+      updateOne: {
+        filter: { _id: productId },
+        update: {
+          $set: { inStock: updatedInStock },
+          $inc: { soldCount: orderItem.quantity },
+        },
+      },
+    };
+  });
+
+  // Perform the bulk update operation
+  await Product.bulkWrite(bulkUpdateOps);
+
   if (paymentMethod === 'Cash On Delivery') {
-    await sendOrderEmail(req.user, order);
-    await cart.remove();
     res.status(201).json({
       status: 'success',
       data: {
@@ -81,8 +98,6 @@ exports.makeOrder = catchAsync(async (req, res, next) => {
     if (!session) return next(new AppError('Failed to create session!', 500));
     const checkout = await createOrderCheckout(req.user, session);
     if (!checkout) return next(new AppError('Failed to create checkout!', 500));
-    await sendOrderEmail(req.user, order);
-    await cart.remove();
     res.status(201).json({
       status: 'success',
       data: {
@@ -91,6 +106,8 @@ exports.makeOrder = catchAsync(async (req, res, next) => {
       },
     });
   }
+  await sendOrderEmail(req.user, order);
+  await cart.remove();
 });
 
 exports.getMyOrder = catchAsync(async (req, res, next) => {
@@ -113,9 +130,26 @@ exports.cancelOrder = catchAsync(async (req, res, next) => {
   if (!id || !validator.isMongoId(id))
     return next(new AppError('Please provide a valid order ID!', 400));
   const order = await Order.findById(id);
+  console.log(JSON.stringify(order));
   if (!order) return next(new AppError('Order not found!', 404));
   if (order.status !== 'Pending')
     return next(new AppError('Order cannot be cancelled!', 400));
+  // Prepare the bulk update operations array
+  const bulkUpdateOps = order.orderItems.map((orderItem) => {
+    const productId = orderItem.product._id;
+    const updatedInStock = orderItem.product.inStock + orderItem.quantity;
+
+    return {
+      updateOne: {
+        filter: { _id: productId },
+        update: { $set: { inStock: updatedInStock } },
+      },
+    };
+  });
+
+  // Perform the bulk update operation
+  await Product.bulkWrite(bulkUpdateOps);
+
   order.status = 'Cancelled';
   await order.save();
   res.status(200).json({
