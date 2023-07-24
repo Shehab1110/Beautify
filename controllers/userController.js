@@ -80,13 +80,19 @@ exports.getAllUsers = catchAsync(async (req, res, next) => {
 
 exports.addProduct = catchAsync(async (req, res, next) => {
   const { name, description, price, image, category } = req.body;
+  const { user } = req;
   const newProduct = await Product.create({
     name,
     description,
     price,
     image,
     category,
-    seller: req.user.id,
+    seller: {
+      name: user.name,
+      photo: user.photo,
+      phoneNumber: user.phoneNumber,
+      location: user.location,
+    },
   });
   res.status(201).json({
     status: 'success',

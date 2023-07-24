@@ -77,7 +77,7 @@ orderSchema.index({ user: 1 });
 orderSchema.pre(/^find/, function (next) {
   this.populate({
     path: 'orderItems.product',
-    select: 'name price image',
+    select: 'name price image inStock',
   });
   next();
 });

@@ -42,9 +42,9 @@ const productSchema = new mongoose.Schema(
       required: [true, 'Please provide a category'],
       enum: [
         'face',
-        'Eyes',
-        'Lips',
-        'Nails',
+        'eyes',
+        'lips',
+        'nails',
         'brushes and tools',
         'makeup removals',
         'skin care',
@@ -61,9 +61,30 @@ const productSchema = new mongoose.Schema(
       default: 4.5,
     },
     seller: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: [true, 'Please provide a seller'],
+      name: {
+        type: String,
+        required: [true, 'Please provide the seller name'],
+      },
+      photo: String,
+      phoneNumber: String,
+      location: {
+        type: {
+          type: String,
+          default: 'Point',
+          enum: ['Point'],
+        },
+        coordinates: [Number],
+      },
+    },
+    inStock: {
+      type: Number,
+      default: 1,
+      min: [0, 'It cannot be 0 in stock!'],
+      required: [true, 'You must provide how many are in stock!'],
+    },
+    soldCount: {
+      type: Number,
+      default: 0,
     },
   },
   {
@@ -71,16 +92,16 @@ const productSchema = new mongoose.Schema(
   }
 );
 
-productSchema.index({ name: 1, category: 1 }, { unique: true });
+// productSchema.index({ name: 1, category: 1 }, { unique: true });
 productSchema.index({ price: 1, category: 1 }, { unique: false });
 
-productSchema.pre(/^find/, function (next) {
-  this.populate({
-    path: 'seller',
-    select: 'name photo phoneNumber location',
-  });
-  next();
-});
+// productSchema.pre(/^find/, function (next) {
+//   this.populate({
+//     path: 'seller',
+//     select: 'name photo phoneNumber location',
+//   });
+//   next();
+// });
 
 const Product = mongoose.model('Product', productSchema);
 

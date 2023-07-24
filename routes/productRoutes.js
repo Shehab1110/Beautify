@@ -12,6 +12,14 @@ router.get(
 );
 
 router.get(
+  '/best-selling-products',
+  authController.protect,
+  productController.getBestSellingProducts
+);
+
+router.get('/wishlist', authController.protect, productController.getWishlist);
+
+router.get(
   '/getProduct/:id',
   authController.protect,
   productController.getProductByID
@@ -41,6 +49,8 @@ router.patch(
   '/update-product/:productID',
   authController.protect,
   authController.permitOnly('seller'),
+  productController.uploadProductPhoto,
+  productController.resizeProductPhoto,
   productController.updateProduct
 );
 
@@ -55,14 +65,14 @@ router.post(
   '/add-to-favorites/:productID',
   authController.protect,
   authController.permitOnly('customer'),
-  productController.addToFavorites
+  productController.addToWishlist
 );
 
 router.post(
   '/remove-from-favorites/:productID',
   authController.protect,
   authController.permitOnly('customer'),
-  productController.removeFromFavorites
+  productController.removeFromWishlist
 );
 
 module.exports = router;
