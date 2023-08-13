@@ -62,14 +62,14 @@ router.delete(
 );
 
 router.post(
-  '/add-to-favorites/:productID',
+  '/add-to-wishlist/:productID',
   authController.protect,
   authController.permitOnly('customer'),
   productController.addToWishlist
 );
 
 router.post(
-  '/remove-from-favorites/:productID',
+  '/remove-from-wishlist/:productID',
   authController.protect,
   authController.permitOnly('customer'),
   productController.removeFromWishlist
