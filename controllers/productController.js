@@ -77,7 +77,10 @@ exports.getProductsByCategory = catchAsync(async (req, res, next) => {
     ].includes(category)
   )
     return next(new AppError('Please provide a valid category!', 400));
-  const features = new APIFeatures(Product.find({ category }), req.query)
+  const features = new APIFeatures(
+    Product.find({ category }).cache(),
+    req.query
+  )
     .filter()
     .sort()
     .limitFields()
