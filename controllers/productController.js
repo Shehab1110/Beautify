@@ -31,7 +31,7 @@ exports.getAllProducts = catchAsync(async (req, res, next) => {
 });
 
 exports.getBestSellingProducts = catchAsync(async (req, res, next) => {
-  const products = await Product.find().sort('-soldCount').limit(10).exec();
+  const products = await Product.find().sort('-soldCount').limit(15).cache();
   return products
     ? res.status(200).json({
         status: 'success',
@@ -47,10 +47,13 @@ exports.getProductByID = catchAsync(async (req, res, next) => {
   if (!id) return next(new AppError('Please provide an ID!', 400));
   if (!validator.isMongoId(id))
     return next(new AppError('Please provide a valid ID!', 400));
-  const product = await Product.findById(id);
+  const [product, ratings] = await Promise.all([
+    Product.findById(id).lean().cache({ expiryTime: 30 }),
+    Ratings.find({ product: id }),
+  ]);
   if (!product)
     return next(new AppError('No product found with that ID!', 404));
-  const ratings = await Ratings.find({ product: id });
+  product.inWishlist = user.wishlist.includes(product._id);
   res.status(200).json({
     status: 'success',
     data: {

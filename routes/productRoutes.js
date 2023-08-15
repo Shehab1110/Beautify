@@ -17,8 +17,6 @@ router.get(
   productController.getBestSellingProducts
 );
 
-router.get('/wishlist', authController.protect, productController.getWishlist);
-
 router.get(
   '/getProduct/:id',
   authController.protect,
@@ -35,6 +33,22 @@ router.get(
   '/getProductsByName/:name',
   authController.protect,
   productController.getProductByName
+);
+
+router.get('/wishlist', authController.protect, productController.getWishlist);
+
+router.post(
+  '/add-to-wishlist/:productID',
+  authController.protect,
+  authController.permitOnly('customer'),
+  productController.addToWishlist
+);
+
+router.post(
+  '/remove-from-wishlist/:productID',
+  authController.protect,
+  authController.permitOnly('customer'),
+  productController.removeFromWishlist
 );
 
 // For Seller
@@ -59,20 +73,6 @@ router.delete(
   authController.protect,
   authController.permitOnly('seller'),
   productController.deleteProduct
-);
-
-router.post(
-  '/add-to-wishlist/:productID',
-  authController.protect,
-  authController.permitOnly('customer'),
-  productController.addToWishlist
-);
-
-router.post(
-  '/remove-from-wishlist/:productID',
-  authController.protect,
-  authController.permitOnly('customer'),
-  productController.removeFromWishlist
 );
 
 module.exports = router;
