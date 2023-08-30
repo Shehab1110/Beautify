@@ -6,6 +6,10 @@ const rateLimit = require('express-rate-limit');
 const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
 const chalk = require('chalk');
+const passport = require('passport');
+const session = require('express-session');
+const { promisify } = require('util');
+const jwt = require('jsonwebtoken');
 
 const AppError = require('./utils/appError');
 const globalErrorController = require('./controllers/errorController');
@@ -17,6 +21,16 @@ const cartRouter = require('./routes/cartRoutes');
 const orderRouter = require('./routes/orderRoutes');
 const paymentRouter = require('./routes/paymentRoutes');
 const ratingRouter = require('./routes/ratingRoutes');
+require('./utils/passport');
+
+app.use(
+  session({
+    secret: process.env.COOKIE_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: { secure: true },
+  })
+);
 
 // Serving static files
 app.use(express.static(path.join(__dirname, 'public')));
@@ -56,11 +70,27 @@ app.get('/', (req, res) => {
 });
 
 app.use('/api/v1/users', userRouter);
-app.use('/api/v1/products', productRouter);
-app.use('/api/v1/cart', cartRouter);
-app.use('/api/v1/orders', orderRouter);
-app.use('/api/v1/payments', paymentRouter);
-app.use('/api/v1/ratings', ratingRouter);
+
+app.get(
+  '/auth/google/callback',
+  passport.authenticate('google'),
+  async (req, res, next) => {
+    const { user } = req;
+    if (req.session) console.log(req.session);
+
+    const token = await promisify(jwt.sign)(
+      { id: user._id },
+      process.env.JWT_SECRET
+    );
+    res.status(200).json({
+      status: 'success',
+      data: {
+        user,
+        token,
+      },
+    });
+  }
+);
 
 // Handling unhandled routes
 app.all('*', (req, res, next) => {

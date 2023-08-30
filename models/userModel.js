@@ -26,6 +26,7 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       validate: [validator.isEmail, 'Please provide a valid email!'],
     },
+    googleID: String,
     phoneNumber: {
       type: String,
       validate: {
@@ -35,7 +36,7 @@ const userSchema = new mongoose.Schema(
         },
         message: 'Please provide a valid phone number!',
       },
-      required: [true, 'Please provide a phone number!'],
+      // required: [true, 'Please provide a phone number!'],
     },
     password: {
       type: String,
